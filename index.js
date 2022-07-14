@@ -1,8 +1,10 @@
-// Require the necessary discord.js classes
+// Requiring the necessary things
 const fs = require('node:fs');
 const path = require('node:path');
 const { Client, Intents, Collection } = require('discord.js');
 const { token } = require('./config.json');
+const Sequelize = require('sequelize');
+const { identity } = require('lodash');
 
 // Create a new client instance
 const client = new Client({ intents: [Intents.FLAGS.GUILDS] });
@@ -33,6 +35,30 @@ for (const file of eventFiles) {
 		client.on(event.name, (...args) => event.execute(...args));
 	}
 }
+
+// Using Sequelize
+const sequelize = new Sequelize('database', 'user', 'password', {
+	host: 'localhost',
+	dialect: 'sqlite',
+	logging: false,
+	storage: 'database.sqlite',
+});
+
+// Creating the table with Sequelize
+const userInfo = sequelize.define('userinfo', {
+	discordID: {
+		type: Sequelize.NUMBER,
+		unique: true,
+	},
+	tetrioID: {
+		type: Sequelize.STRING,
+		unique: true
+	}
+});
+
+client.once('ready', () => {
+	userInfo.sync();
+});
 
 // Login to Discord with your client's token
 client.login(token);
