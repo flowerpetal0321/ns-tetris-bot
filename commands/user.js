@@ -38,6 +38,22 @@ module.exports = {
 				.addUserOption(option => option.setName('user').setDescription('Pick a user'))
 				.addStringOption(option => option.setName('tetrio_user_id').setDescription('The user ID (NOT the username!!)'))),
 		async execute(interaction) {
-			await interaction.reply('This feature hasn\'t been completed yet lol sorry');
+			await interaction.deferReply();
+
+			if(interaction.options.getSubcommand() === 'add') {
+				await interaction.editReply('user add: this feature hasn\'t been completed yet lol sorry');
+			}
+			else if(interaction.options.getSubcommand() === 'delete') {
+				await interaction.editReply('user delete: this feature hasn\'t been completed yet lol sorry');
+			}
+			else if(interaction.options.getSubcommand() === 'leaderboard') {
+				await interaction.editReply('user leaderboard: this feature hasn\'t been completed yet lol sorry');
+			}
+			else if(interaction.options.getSubcommand() === 'list') {
+				await interaction.editReply('user list: this feature hasn\'t been completed yet lol sorry');
+			}
+			else if(interaction.options.getSubcommand() === 'who') {
+				await interaction.editReply('user who: this feature hasn\'t been completed yet lol sorry');
+			}
 		}
 };
