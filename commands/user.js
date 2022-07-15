@@ -68,21 +68,23 @@ module.exports = {
 			else if(interaction.options.getSubcommand() === 'delete') {
 				if (interaction.options.getUser('user')) {
 					const userDiscordID = interaction.options.getUser('user');
-					const rowCount = await userInfo.destroy({ where: { discordID: userDiscordID}});
+					const user = await userInfo.findOne({ where: { discordID: userDiscordID } });
+					const rowCount = await userInfo.destroy({ where: { discordID: userDiscordID } });
 
 					if (!rowCount) return interaction.editReply('That Discord user does not appear to be in the list.');
 
-					return interaction.editReply('User <@' + userDiscordID + '> has been deleted.');
+					return interaction.editReply(`User ${userDiscordID}, who was linked to ${user.get('tetrioI(D')} has been deleted.`);
 				}
 				if (interaction.options.getString('tetrio_id')) {
 					const userTetrioID = interaction.options.getString('tetrio_id');
-					const rowCount = await userInfo.destroy({ where: { tetrioID: userTetrioID}});
+					const user = await userInfo.findOne({ where: { tetrioID: userTetrioID } });
+					const rowCount = await userInfo.destroy({ where: { tetrioID: userTetrioID } });
 
 					if (!rowCount) return interaction.editReply('That TETR.IO user does not appear to be in the list.');
 
-					return interaction.editReply('TETR.IO User ' + userTetrioID + ' has been deleted.');
+					return interaction.editReply(`TETR.IO User ${userTetrioID}, who was linked to ${user.get('discordID')}, has been deleted.`);
 				}
-				return interaction.editReply('bruh lmao');
+				return interaction.editReply('You have to specify someone to delete smh');
 			}
 			else if(interaction.options.getSubcommand() === 'leaderboard') {
 				await interaction.editReply('user leaderboard: this feature hasn\'t been completed yet lol sorry');
@@ -91,7 +93,20 @@ module.exports = {
 				await interaction.editReply('user list: this feature hasn\'t been completed yet lol sorry');
 			}
 			else if(interaction.options.getSubcommand() === 'who') {
-				await interaction.editReply('user who: this feature hasn\'t been completed yet lol sorry');
+				if (interaction.options.getUser('user') && interaction.options.getString('tetrio_id')) {
+					return interaction.editReply('Only specify one of the fields please.')
+				}
+				if (interaction.options.getUser('user')) {
+					const userDiscordID = interaction.options.getUser('user');
+					const user = await userInfo.findOne({ where: { discordID: userDiscordID } });
+					return interaction.editReply('That user\'s TETR.IO ID is ' + user.get('tetrioID'));
+				}
+				if (interaction.options.getString('tetrio_id')) {
+					const userTetrioID = interaction.options.getString('tetrio_id');
+					const user = await userInfo.findOne({ where: { tetrioID: userTetrioID } });
+					return interaction.editReply(`That user is ${user.get('discordID')} on Discord`);
+				}
+				return interaction.editReply('Please specify one of the fields.');
 			}
 		}
 };
