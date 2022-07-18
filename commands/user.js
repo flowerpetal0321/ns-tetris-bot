@@ -1,5 +1,6 @@
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const { userInfo } = require('../database-create.js');
+const getData = require('../functions/getData.js');
 
 module.exports = {
 	data: new SlashCommandBuilder()
@@ -25,8 +26,26 @@ module.exports = {
 					option.setName('statistic')
 					.setDescription('Pick which statistic to rank our members by! Defaults to TR.')
 					.addChoices(
-						{ name: 'Tetra League Rating', value: 'tr' },
-						{ name: '40 Lines Sprint', value: '40l' },
+						{ name: 'Join Date', value: 'joindate' },
+						{ name: 'Number of Badges', value: 'badgeNumber' },
+						{ name: 'XP', value: 'xp' },
+						{ name: 'Total Online Games Played', value: 'gamesplayed' },
+						{ name: 'Total Online Games Won', value: 'gameswon' },
+						{ name: 'Number of Hours', value: 'gametimeHours' },
+						{ name: 'Tetra League Games Played', value: 'leagueGamesplayed' },
+						{ name: 'Tetra League Games Won', value: 'leagueGameswon' },
+						{ name: 'Tetra League Win Rate', value: 'tlwinrate' },
+						{ name: 'Tetra League Rating', value: 'leaugeRating' },
+						{ name: 'Tetra League Rating Deviation', value: 'leagueRD' },
+						{ name: 'Tetra League APM', value: 'leagueAPM' },
+						{ name: 'Tetra League PPS', value: 'leaguePPS' },
+						{ name: 'Tetra League VS', value: 'leagueVS' },
+						{ name: 'Tetra League VS/APM', value: 'vsapm'},
+						{ name: 'Tetra League APP', value: 'app'},
+						{ name: 'Friend Count', value: 'friendcount' },
+						{ name: '40 Lines Sprint PB', value: 'sprintRecord' },
+						{ name: 'Blitz PB', value: 'blitzRecord' },
+						{ name: 'Zen Level', value: 'zenLevel' }
 					)))
 		.addSubcommand(subcommand =>
 			subcommand
@@ -39,6 +58,7 @@ module.exports = {
 				.addUserOption(option => option.setName('user').setDescription('Pick a user'))
 				.addStringOption(option => option.setName('tetrio_id').setDescription('The TETR.IO user ID (NOT the username!!)'))),
 		async execute(interaction) {
+
 			await interaction.deferReply();
 
 			if(interaction.options.getSubcommand() === 'add') {
@@ -94,7 +114,7 @@ module.exports = {
 			else if(interaction.options.getSubcommand() === 'list') {
 				const userList = await userInfo.findAll({ attributes: ['discordID', 'tetrioID']});
 				const listString = userList.map(t => `${t.discordID} ${t.tetrioID}`).join('\n') || 'There are no users in the list.';
-				return interaction.editReply(`List of everyone: ${listString}`);
+				return interaction.editReply(`**List of everyone:**\n${listString}`);
 			}
 			else if(interaction.options.getSubcommand() === 'who') {
 				if (interaction.options.getUser('user') && interaction.options.getString('tetrio_id')) {
@@ -102,12 +122,21 @@ module.exports = {
 				}
 				if (interaction.options.getUser('user')) {
 					const userDiscordID = interaction.options.getUser('user');
-					const user = await userInfo.findOne({ where: { discordID: userDiscordID } });
-					return interaction.editReply(`That user\'s TETR.IO ID is ${user.get('tetrioID')}. You can find their TETR.IO profile at https://ch.tetr.io/u/${user.get('tetrioID')}`);
+					const userTetrioID = await getData.getData(userDiscordID, 'neither', 'tetrioID');
+					const userUsername = await getData.getData(userDiscordID, 'info', 'username');
+
+					if (userTetrioID == 'ERROR: user not found') {
+						return interaction.editReply('That user is not on the list :(')
+					}
+
+					return interaction.editReply(`That user\'s TETR.IO username is ${userUsername}. You can find their TETR.IO profile at https://ch.tetr.io/u/${userTetrioID}`);
 				}
 				if (interaction.options.getString('tetrio_id')) {
 					const userTetrioID = interaction.options.getString('tetrio_id');
 					const user = await userInfo.findOne({ where: { tetrioID: userTetrioID } });
+					if (!user) {
+						return interaction.editReply(`That user is not in the list :(`);
+					}
 					return interaction.editReply(`That user is ${user.get('discordID')} on Discord`);
 				}
 				return interaction.editReply('Please specify one of the fields.');
