@@ -117,10 +117,11 @@ module.exports = {
 					
 					//declare class
 					class UserPlusInfo {
-						constructor(discordID, username, stat) {
+						constructor(discordID, username, stat, rank) {
 							this.discordID = discordID;
 							this.username = username;
 							this.stat = stat;
+							this.rank = rank;
 						}
 					}
 
@@ -131,8 +132,44 @@ module.exports = {
 					for (i in userList) {
 						const userUsername = await getData.getData(userList[i].discordID, 'info', 'username');
 						const userStat = await getData.getData(userList[i].discordID, 'info', requestedStat);
-						const userObject = new UserPlusInfo(userList[i].discordID, userUsername, userStat);
-						userListWithStats.push(userObject);
+						if (['joindate', 'badgeNumber', 'gamesplayed', 'gameswon', 'leagueGamesplayed', 'leagueGameswon', 'friendcount'].includes(requestedStat) && !userStat) {
+							const userObject = new UserPlusInfo(userList[i].discordID, userUsername, 0);
+							userListWithStats.push(userObject);
+						}
+						else if (['leagueRD', 'leagueAPM', 'leaguePPS', 'leagueVS'].includes(requestedStat) && !userStat) {
+							//don't do anything
+						}
+						else {
+							const userObject = new UserPlusInfo(userList[i].discordID, userUsername, userStat);
+							userListWithStats.push(userObject);
+						}
+					}
+
+					//greatest to least
+					if (['badgeNumber', 'gamesplayed', 'gameswon', 'leagueGamesplayed', 'leagueGameswon', 'leagueRD', 'leagueAPM', 'league PPS', 'leagueVS', 'friendcount'].includes(requestedStat)) {
+						userListWithStats.sort((a, b) => b.stat - a.stat);
+					}
+					//least to greatest
+					else if (['jointime'].includes(requestedStat)) {
+						userListWithStats.sort((a, b) => a.stat - b.stat);
+					}
+
+					//give each person a rank
+					let currentRank = 1;
+					for (i in userListWithStats) {
+						//when the first one in the list
+						if (i == 0) {
+							userListWithStats[i].rank = 1;
+						}
+						//when same as previous
+						else if (userListWithStats[i].stat == userListWithStats[i - 1].stat) {
+							userListWithStats[i].rank = currentRank;
+						}
+						//when different than previous
+						else {
+							currentRank++;
+							userListWithStats[i].rank = currentRank;
+						}
 					}
 
 					console.log(userListWithStats);
