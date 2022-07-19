@@ -74,8 +74,8 @@ module.exports = {
 						discordID: userDiscordID,
 						tetrioID: userTetrioID,
 					});
-
-					return interaction.editReply('<@' + newEntry.discordID + '>' + ' was added with the TETR.IO ID ' + newEntry.tetrioID);
+					const userUsername = await getData.getData(userDiscordID, 'info', 'username');
+					return interaction.editReply(`<@${newEntry.discordID}> was added with the TETR.IO ID ${newEntry.tetrioID} (username: ${userUsername})`);
 				}
 				catch(error) {
 					if (error.name === 'SequelizeUniqueConstraintError') {
@@ -281,7 +281,15 @@ module.exports = {
 			}
 			else if(interaction.options.getSubcommand() === 'list') {
 				const userList = await userInfo.findAll({ attributes: ['discordID', 'tetrioID']});
-				const listString = userList.map(t => `${t.discordID} ${t.tetrioID}`).join('\n') || 'There are no users in the list.';
+				const userListWithUsername = [];
+				for(i in userList){
+					userListWithUsername.push({
+						discordID: userList[i].discordID,
+						tetrioID: userList[i].tetrioID,
+						username: await getData.getData(userList[i].discordID, 'info', 'username')
+					});
+				}
+				const listString = userListWithUsername.map(t => `${t.discordID} ${t.tetrioID} (${t.username})`).join('\n') || 'There are no users in the list.';
 				return interaction.editReply(`**List of everyone:**\n${listString}`);
 			}
 			else if(interaction.options.getSubcommand() === 'who') {
