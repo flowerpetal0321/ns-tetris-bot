@@ -112,7 +112,7 @@ module.exports = {
 				const requestedStat = interaction.options.getString('statistic');
 
 				//pure user info
-				if(['joindate', 'badgeNumber', 'gamesplayed', 'gameswon', 'leagueGamesplayed', 'leagueGameswon', 'leagueRD', 'leagueAPM', 'league PPS', 'leagueVS', 'friendcount'].includes(requestedStat)){
+				if(['joindate', 'badgeNumber', 'gamesplayed', 'gameswon', 'leagueGamesplayed', 'leagueGameswon', 'leagueRD', 'leagueAPM', 'leaguePPS', 'leagueVS', 'friendcount'].includes(requestedStat)){
 					const userList = await userInfo.findAll({ attributes: ['discordID']});
 					
 					//declare class
@@ -146,7 +146,7 @@ module.exports = {
 					}
 
 					//greatest to least
-					if (['badgeNumber', 'gamesplayed', 'gameswon', 'leagueGamesplayed', 'leagueGameswon', 'leagueRD', 'leagueAPM', 'league PPS', 'leagueVS', 'friendcount'].includes(requestedStat)) {
+					if (['badgeNumber', 'gamesplayed', 'gameswon', 'leagueGamesplayed', 'leagueGameswon', 'leagueRD', 'leagueAPM', 'leaguePPS', 'leagueVS', 'friendcount'].includes(requestedStat)) {
 						userListWithStats.sort((a, b) => b.stat - a.stat);
 					}
 					//least to greatest
@@ -172,7 +172,9 @@ module.exports = {
 						}
 					}
 
-					console.log(userListWithStats);
+					//print!!!!
+					const listString = userListWithStats.map(t => `${t.rank}. ${t.discordID} (${t.username}): ${t.stat}`).join('\n') || 'I couldn\'t find any users to rank.';
+					return interaction.editReply(`**Leaderboard for ${interaction.options.getString('statistic')}:**\n${listString}`);
 				}
 
 				//user info but not 100% pure
