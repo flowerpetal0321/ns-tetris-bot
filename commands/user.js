@@ -110,11 +110,11 @@ module.exports = {
 			}
 			else if(interaction.options.getSubcommand() === 'leaderboard') {
 				const requestedStat = interaction.options.getString('statistic');
+				const userList = await userInfo.findAll({ attributes: ['discordID']});
+				const userListWithStats = [];
 
 				//user info with only one stat listed
 				if(['joindate', 'badgeNumber', 'gamesplayed', 'gameswon', 'leagueGamesplayed', 'leagueGameswon', 'leagueRD', 'leagueAPM', 'leaguePPS', 'leagueVS', 'friendcount', 'gametimeHours', 'tlwinrate', 'vsapm', 'app'].includes(requestedStat)){
-					const userList = await userInfo.findAll({ attributes: ['discordID']});
-					
 					//declare class
 					class UserPlusInfo {
 						constructor(discordID, username, stat, rank) {
@@ -125,9 +125,6 @@ module.exports = {
 						}
 					}
 
-					//declare array
-					const userListWithStats = [];
-
 					for (i in userList) {
 						//get username
 						const userUsername = await getData.getData(userList[i].discordID, 'info', 'username');
@@ -135,11 +132,11 @@ module.exports = {
 						//declare userStat
 						let userStat;
 
-						//writing onto array when pure user info
+						//writing onto userStat when pure user info
 						if (['joindate', 'badgeNumber', 'gamesplayed', 'gameswon', 'leagueGamesplayed', 'leagueGameswon', 'leagueRD', 'leagueAPM', 'leaguePPS', 'leagueVS', 'friendcount'].includes(requestedStat)) {
 							userStat = await getData.getData(userList[i].discordID, 'info', requestedStat);
 						}
-						//writing onto array when not pure
+						//writing onto userStat when not pure
 						else if (requestedStat == 'gametimeHours') {
 							const gametimeSeconds = await getData.getData(userList[i].discordID, 'info', 'gametime');
 							userStat = gametimeSeconds / 3600;
@@ -186,11 +183,11 @@ module.exports = {
 						}
 					}
 
-					//greatest to least
+					//sort greatest to least
 					if (['badgeNumber', 'gamesplayed', 'gameswon', 'leagueGamesplayed', 'leagueGameswon', 'leagueRD', 'leagueAPM', 'leaguePPS', 'leagueVS', 'friendcount', 'gametimeHours', 'tlwinratet', 'vsapm', 'app'].includes(requestedStat)) {
 						userListWithStats.sort((a, b) => b.stat - a.stat);
 					}
-					//least to greatest
+					//sort least to greatest
 					else if (['jointime'].includes(requestedStat)) {
 						userListWithStats.sort((a, b) => a.stat - b.stat);
 					}
@@ -218,8 +215,60 @@ module.exports = {
 					return interaction.editReply(`**Leaderboard for ${interaction.options.getString('statistic')}:**\n${listString}`);
 				}
 
-				//user info but there is more than one stat listed
-				if(['xp', 'leagueRating',].includes(requestedStat)){
+				//leaderboard for xp
+				if(requestedStat == 'xp'){
+					//declare class
+					class UserPlusInfo {
+						constructor(discordID, username, level, xp, rank) {
+							this.discordID = discordID;
+							this.username = username;
+							this.level = level;
+							this.xp = xp;
+							this.rank = rank;
+						}
+					}
+
+					for (i in userList) {
+						//get username
+						const userUsername = await getData.getData(userList[i].discordID, 'info', 'username');
+
+						//writing onto user stats
+						const userXP = await getData.getData(userList[i].discordID, 'info', 'xp');
+						let weirdMaxThing = (userXP - 4000000) / 5000;
+						if (weirdMaxThing < 0) weirdMaxThing = 0;
+						const userLevel = Math.floor(Math.pow(userXP / 500, 0.6) + userXP / (5000 + weirdMaxThing) + 1);
+
+						//writing onto array of user+stats
+						const userObject = new UserPlusInfo(userList[i].discordID, userUsername, userLevel, userXP);
+						userListWithStats.push(userObject);
+
+						//sort greatest to least
+						userListWithStats.sort((a, b) => b.xp - a.xp);
+					}
+
+					//give each person a rank
+					let currentRank = 1;
+					for (i in userListWithStats) {
+						//when the first one in the list
+						if (i == 0) {
+							userListWithStats[i].rank = 1;
+						}
+						//when same as previous
+						else if (userListWithStats[i].xp == userListWithStats[i - 1].xp) {
+							userListWithStats[i].rank = currentRank;
+						}
+						//when different than previous
+						else {
+							currentRank++;
+							userListWithStats[i].rank = currentRank;
+						}
+					}
+
+					const listString = userListWithStats.map(t => `${t.rank}. ${t.discordID} (${t.username}): Level ${t.level} (${t.xp} xp)`).join('\n') || 'I couldn\'t find any users to rank.';
+					return interaction.editReply(`**Leaderboard for ${interaction.options.getString('statistic')}:**\n${listString}`);
+				}
+
+				if(requestedStat == 'leagueRating'){
 					//
 				}
 
