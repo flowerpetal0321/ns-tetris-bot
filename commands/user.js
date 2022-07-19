@@ -111,8 +111,8 @@ module.exports = {
 			else if(interaction.options.getSubcommand() === 'leaderboard') {
 				const requestedStat = interaction.options.getString('statistic');
 
-				//pure user info
-				if(['joindate', 'badgeNumber', 'gamesplayed', 'gameswon', 'leagueGamesplayed', 'leagueGameswon', 'leagueRD', 'leagueAPM', 'leaguePPS', 'leagueVS', 'friendcount'].includes(requestedStat)){
+				//user info with only one stat listed
+				if(['joindate', 'badgeNumber', 'gamesplayed', 'gameswon', 'leagueGamesplayed', 'leagueGameswon', 'leagueRD', 'leagueAPM', 'leaguePPS', 'leagueVS', 'friendcount', 'gametimeHours', 'tlwinrate', 'vsapm', 'app'].includes(requestedStat)){
 					const userList = await userInfo.findAll({ attributes: ['discordID']});
 					
 					//declare class
@@ -128,15 +128,56 @@ module.exports = {
 					//declare array
 					const userListWithStats = [];
 
-					//get info for all users and write onto array
 					for (i in userList) {
+						//get username
 						const userUsername = await getData.getData(userList[i].discordID, 'info', 'username');
-						const userStat = await getData.getData(userList[i].discordID, 'info', requestedStat);
-						if (['joindate', 'badgeNumber', 'gamesplayed', 'gameswon', 'leagueGamesplayed', 'leagueGameswon', 'friendcount'].includes(requestedStat) && !userStat) {
+
+						//declare userStat
+						let userStat;
+
+						//writing onto array when pure user info
+						if (['joindate', 'badgeNumber', 'gamesplayed', 'gameswon', 'leagueGamesplayed', 'leagueGameswon', 'leagueRD', 'leagueAPM', 'leaguePPS', 'leagueVS', 'friendcount'].includes(requestedStat)) {
+							userStat = await getData.getData(userList[i].discordID, 'info', requestedStat);
+						}
+						//writing onto array when not pure
+						else if (requestedStat == 'gametimeHours') {
+							const gametimeSeconds = await getData.getData(userList[i].discordID, 'info', 'gametime');
+							userStat = gametimeSeconds / 3600;
+						}
+						else if (requestedStat == 'tlwinrate') {
+							const gameswon = await getData.getData(userList[i].discordID, 'info', 'leagueGameswon');
+							const totalgames = await getData.getData(userList[i].discordID, 'info', 'leagueGamesplayed');
+							if (gameswon == 0 || totalgames == 0) {
+								break;
+							}
+							userStat = gameswon / totalgames * 100 + '%';
+						}
+						else if (requestedStat == 'vsapm') {
+							const leagueVS = await getData.getData(userList[i].discordID, 'info', 'leagueVS');
+							const leagueAPM = await getData.getData(userList[i].discordID, 'info', 'leagueAPM');
+							if (!leagueVS || !leagueAPM) {
+								break;
+							}
+							userStat = leagueVS / leagueAPM;
+						}
+						else if (requestedStat == 'app') {
+							const leagueAPM = await getData.getData(userList[i].discordID, 'info', 'leagueAPM');
+							const leaguePPS = await getData.getData(userList[i].discordID, 'info', 'leaguePPS');
+							if (!leagueAPM || !leaguePPS) {
+								break;
+							}
+							userStat = leagueAPM / leaguePPS / 60;
+						}
+
+						//writing onto array of user+stats, and handling any null stats
+						if (['joindate', 'badgeNumber', 'gamesplayed', 'gameswon', 'leagueGamesplayed', 'leagueGameswon', 'friendcount', 'gametimehours'].includes(requestedStat) && !userStat) {
 							const userObject = new UserPlusInfo(userList[i].discordID, userUsername, 0);
 							userListWithStats.push(userObject);
 						}
-						else if (['leagueRD', 'leagueAPM', 'leaguePPS', 'leagueVS'].includes(requestedStat) && !userStat) {
+						else if (['leagueRD', 'leagueAPM', 'leaguePPS', 'leagueVS', 'tlwinrate', 'vsapm', 'app'].includes(requestedStat) && !userStat) {
+							//don't do anything
+						}
+						else if (userStat == -1) {
 							//don't do anything
 						}
 						else {
@@ -146,7 +187,7 @@ module.exports = {
 					}
 
 					//greatest to least
-					if (['badgeNumber', 'gamesplayed', 'gameswon', 'leagueGamesplayed', 'leagueGameswon', 'leagueRD', 'leagueAPM', 'leaguePPS', 'leagueVS', 'friendcount'].includes(requestedStat)) {
+					if (['badgeNumber', 'gamesplayed', 'gameswon', 'leagueGamesplayed', 'leagueGameswon', 'leagueRD', 'leagueAPM', 'leaguePPS', 'leagueVS', 'friendcount', 'gametimeHours', 'tlwinratet', 'vsapm', 'app'].includes(requestedStat)) {
 						userListWithStats.sort((a, b) => b.stat - a.stat);
 					}
 					//least to greatest
@@ -177,8 +218,8 @@ module.exports = {
 					return interaction.editReply(`**Leaderboard for ${interaction.options.getString('statistic')}:**\n${listString}`);
 				}
 
-				//user info but not 100% pure
-				if(['xp', 'gametimeHours', 'leagueRating', 'tlwinrate', 'vsapm', 'app'].includes(requestedStat)){
+				//user info but there is more than one stat listed
+				if(['xp', 'leagueRating',].includes(requestedStat)){
 					//
 				}
 
