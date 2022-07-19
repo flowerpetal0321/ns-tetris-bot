@@ -109,7 +109,46 @@ module.exports = {
 				return interaction.editReply('You have to specify someone to delete smh');
 			}
 			else if(interaction.options.getSubcommand() === 'leaderboard') {
-				await interaction.editReply('user leaderboard: this feature hasn\'t been completed yet lol sorry');
+				const requestedStat = interaction.options.getString('statistic');
+
+				//pure user info
+				if(['joindate', 'badgeNumber', 'gamesplayed', 'gameswon', 'leagueGamesplayed', 'leagueGameswon', 'leagueRD', 'leagueAPM', 'league PPS', 'leagueVS', 'friendcount'].includes(requestedStat)){
+					const userList = await userInfo.findAll({ attributes: ['discordID']});
+					
+					//declare class
+					class UserPlusInfo {
+						constructor(discordID, username, stat) {
+							this.discordID = discordID;
+							this.username = username;
+							this.stat = stat;
+						}
+					}
+
+					//declare array
+					const userListWithStats = [];
+
+					//get info for all users and write onto array
+					for (i in userList) {
+						const userUsername = await getData.getData(userList[i].discordID, 'info', 'username');
+						const userStat = await getData.getData(userList[i].discordID, 'info', requestedStat);
+						const userObject = new UserPlusInfo(userList[i].discordID, userUsername, userStat);
+						userListWithStats.push(userObject);
+					}
+
+					console.log(userListWithStats);
+				}
+
+				//user info but not 100% pure
+				if(['xp', 'gametimeHours', 'leagueRating', 'tlwinrate', 'vsapm', 'app'].includes(requestedStat)){
+					//
+				}
+
+				//user records
+				if(['sprintRecord', 'blitzRecord', 'zenLevel'].includes(requestedStat)){
+					//
+				}
+
+				return interaction.editReply('this feature hasn\'t been completed yet lol sorry');
 			}
 			else if(interaction.options.getSubcommand() === 'list') {
 				const userList = await userInfo.findAll({ attributes: ['discordID', 'tetrioID']});

@@ -105,7 +105,7 @@ module.exports = {
         }
 
         //getting user records
-        if (infoOrRecords = 'records') {
+        if (infoOrRecords == 'records') {
             if (Date.now() > user.get('userRecordsCache')) {
                 try {
                     //get data
@@ -116,12 +116,12 @@ module.exports = {
                     if (!affectedRowsCache) return ('ERROR: something went wrong with writing the cache information to the database');
 
                     //write sprintRecord info to database
-                    /*const affectedRowsSprintRecord = await userInfo.update({ sprintRecord : response.data.data.records.40l.record.endcontext }, { where: { discordID: userDiscordID } });
-                    if (!affectedRowsSprintRecord) return ('ERROR: something went wrong with writing the ~ information to the database');*/
+                    const affectedRowsSprintRecord = await userInfo.update({ sprintRecord : response.data.data.records['40l'.record.endcontext] }, { where: { discordID: userDiscordID } });
+                    if (!affectedRowsSprintRecord) return ('ERROR: something went wrong with writing the ~ information to the database');
 
                     //write sprintRank info to database
-                    /*const affectedRowsSprintRank = await userInfo.update({ sprintRank: response.data.data.records.40l.rank}, { where: { discordID: userDiscordID } });
-                    if (!affectedRowsSprintRank) return ('ERROR: something went wrong with writing the sprint rank information to the database');*/
+                    const affectedRowsSprintRank = await userInfo.update({ sprintRank: response.data.data.records['40l'.rank] }, { where: { discordID: userDiscordID } });
+                    if (!affectedRowsSprintRank) return ('ERROR: something went wrong with writing the sprint rank information to the database');
 
                     //write blitzRecord info to database
                     const affectedRowsBlitzRecord = await userInfo.update({ blitzRecord: response.data.data.records.blitz.record.endcontext }, { where: { discordID: userDiscordID } });
