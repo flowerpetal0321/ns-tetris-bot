@@ -35,6 +35,7 @@ for (const file of eventFiles) {
 	}
 }
 
+//sync database
 client.once('ready', () => {
 	userInfo.sync();
 });

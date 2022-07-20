@@ -75,7 +75,7 @@ module.exports = {
 						tetrioID: userTetrioID,
 					});
 					const userUsername = await getData.getData(userDiscordID, 'info', 'username');
-					return interaction.editReply(`<@${newEntry.discordID}> was added with the TETR.IO ID ${newEntry.tetrioID} (username: ${userUsername})`);
+					return interaction.editReply(`${newEntry.discordID} was added with the TETR.IO ID ${newEntry.tetrioID} (username: ${userUsername})`);
 				}
 				catch(error) {
 					if (error.name === 'SequelizeUniqueConstraintError') {
