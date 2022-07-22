@@ -35,7 +35,7 @@ module.exports = {
 						{ name: 'Tetra League Games Played', value: 'leagueGamesplayed' },
 						{ name: 'Tetra League Games Won', value: 'leagueGameswon' },
 						{ name: 'Tetra League Win Rate', value: 'tlwinrate' },
-						{ name: 'Tetra League Rating', value: 'leaugeRating' },
+						{ name: 'Tetra League Rating', value: 'leagueRating' },
 						{ name: 'Tetra League Rating Deviation', value: 'leagueRD' },
 						{ name: 'Tetra League APM', value: 'leagueAPM' },
 						{ name: 'Tetra League PPS', value: 'leaguePPS' },
@@ -268,13 +268,83 @@ module.exports = {
 					return interaction.editReply(`**Leaderboard for ${interaction.options.getString('statistic')}:**\n${listString}`);
 				}
 
-				if(requestedStat == 'leagueRating'){
+				//leaderboard for tr
+				if(requestedStat == 'leagueRating' || !requestedStat){
+					//declare class
+					class UserPlusInfo {
+						constructor(discordID, username, rating, letterRank, glicko, rd, standing, percentile, rank) {
+							this.discordID = discordID;
+							this.username = username;
+							this.rating = rating;
+							this.letterRank = letterRank;
+							this.glicko = glicko;
+							this.rd = rd;
+							this.standing = standing;
+							this.percentile = percentile;
+							this.rank = rank;
+						}
+					}
+
+					for (i in userList) {
+						//get username
+						const userUsername = await getData.getData(userList[i].discordID, 'info', 'username');
+
+						//writing onto user stats
+						const userRating = await getData.getData(userList[i].discordID, 'info', 'leagueRating');
+						const userLetterRank = await getData.getData(userList[i].discordID, 'info', 'leagueRank');
+						const userGlicko = await getData.getData(userList[i].discordID, 'info', 'leagueGlicko');
+						const userRD = await getData.getData(userList[i].discordID, 'info', 'leagueRD');
+						const userStanding = await getData.getData(userList[i].discordID, 'info', 'leagueStanding');
+						const userPercentile = await getData.getData(userList[i].discordID, 'info', 'leaguePercentile');
+
+						//writing onto array of user+stats, and handling any null stats
+						if (userRating == -1 || userStanding == -1 || !userGlicko || !userRD) {
+							//do nothing
+						}
+						else {
+							const userObject = new UserPlusInfo(userList[i].discordID, userUsername, userRating, userLetterRank, userGlicko, userRD, userStanding, userPercentile);
+							userListWithStats.push(userObject);
+						}
+					}
+
+					//sort greatest to least
+					userListWithStats.sort((a, b) => b.rating - a.rating);
+
+					//give each person a rank
+					let currentRank = 1;
+					for (i in userListWithStats) {
+						//if unranked
+						if (userListWithStats[i].letterRank == 'z'){
+							userListWithStats[i].rank = '-';
+						}
+						//when the first one in the list
+						else if (i == 0) {
+							userListWithStats[i].rank = 1;
+						}
+						//when same as previous
+						else if (userListWithStats[i].rating == userListWithStats[i - 1].rating) {
+							userListWithStats[i].rank = currentRank;
+						}
+						//when different than previous
+						else {
+							currentRank++;
+							userListWithStats[i].rank = currentRank;
+						}
+					}
+
+					//print!!!!
+					const listString = userListWithStats.map(t => `${t.rank}) ${t.discordID} (${t.username}): **${t.rating.toFixed(2)}** (${t.letterRank}) | Glicko: ${t.glicko.toFixed(2)} +- ${t.rd.toFixed(2)} | #${t.standing}, top ${(t.percentile * 100).toFixed(2)}%`).join('\n') || 'I couldn\'t find any users to rank.';
+					return interaction.editReply(`**Leaderboard for leagueRating:**\n${listString}`);
+				}
+
+				//leaderboard for sprint or blitz
+				if(['sprintRecord', 'blitzRecord'].includes(requestedStat)){
 					//
 				}
 
-				//user records
-				if(['sprintRecord', 'blitzRecord', 'zenLevel'].includes(requestedStat)){
-					//
+				//leaderboard for zen
+				if(requestedStat == 'zenLevel'){
+
 				}
 
 				return interaction.editReply('this feature hasn\'t been completed yet lol sorry');
