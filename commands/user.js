@@ -333,18 +333,139 @@ module.exports = {
 					}
 
 					//print!!!!
-					const listString = userListWithStats.map(t => `${t.rank}) ${t.discordID} (${t.username}): **${t.rating.toFixed(2)}** (${t.letterRank}) | Glicko: ${t.glicko.toFixed(2)} +- ${t.rd.toFixed(2)} | #${t.standing}, top ${(t.percentile * 100).toFixed(2)}%`).join('\n') || 'I couldn\'t find any users to rank.';
+					const listString = userListWithStats.map(t => `${t.rank}. ${t.discordID} (${t.username}): **${t.rating.toFixed(2)} (${t.letterRank})** | Glicko: ${t.glicko.toFixed(2)} +- ${t.rd.toFixed(2)} | #${t.standing}, top ${(t.percentile * 100).toFixed(2)}%`).join('\n') || 'I couldn\'t find any users to rank.';
 					return interaction.editReply(`**Leaderboard for leagueRating:**\n${listString}`);
 				}
 
 				//leaderboard for sprint or blitz
 				if(['sprintRecord', 'blitzRecord'].includes(requestedStat)){
-					//
+					//declare class
+					class UserPlusInfo {
+						constructor(discordID, username, record, leaderboardRank, rank) {
+							this.discordID = discordID;
+							this.username = username;
+							this.record = record;
+							this.leaderboardRank = leaderboardRank;
+							this.rank = rank;
+						}
+					}
+
+					for (i in userList) {
+						//get username
+						const userUsername = await getData.getData(userList[i].discordID, 'info', 'username');
+
+						//writing onto user stats
+						let userRecord;
+						let userRank;
+						if(requestedStat == 'blitzRecord'){
+							userRecord = await getData.getData(userList[i].discordID, 'records', 'blitzRecord');
+							userRank = await getData.getData(userList[i].discordID, 'records', 'blitzRank');
+						}
+						else{
+							userRecord = await getData.getData(userList[i].discordID, 'records', 'sprintRecord');
+							userRank = await getData.getData(userList[i].discordID, 'records', 'sprintRank');
+						}
+
+						//writing onto array of user+stats, and handling any null stats
+						if (!userRecord){
+							//do nothing
+						}
+						else if (!userRank){
+							const userObject = new UserPlusInfo(userList[i].discordID, userUsername, userRecord, '-');
+							userListWithStats.push(userObject);
+						}
+						else{
+							const userObject = new UserPlusInfo(userList[i].discordID, userUsername, userRecord, userRank);
+							userListWithStats.push(userObject);
+						}
+
+						//sorting
+						if(requestedStat == 'blitzRecord'){
+							userListWithStats.sort((a, b) => b.record - a.record);
+						}
+						else{
+							userListWithStats.sort((a, b) => a.record - b.record);
+						}
+					}
+
+					//give each person a rank
+					let currentRank = 1;
+					for (i in userListWithStats) {
+						//when the first one in the list
+						if (i == 0) {
+							userListWithStats[i].rank = 1;
+						}
+						//when same as previous
+						else if (userListWithStats[i].record == userListWithStats[i - 1].record) {
+							userListWithStats[i].rank = currentRank;
+						}
+						//when different than previous
+						else {
+							currentRank++;
+							userListWithStats[i].rank = currentRank;
+						}
+					}
+
+					//edit record time to be in minutes-seconds-milliseconds format
+					if(requestedStat == 'sprintRecord'){
+						for (i in userListWithStats){
+							userListWithStats[i].record = `${Math.floor(userListWithStats[i].record / 60000)}:${Math.floor((userListWithStats[i].record % 60000) / 1000)}:${Math.round(userListWithStats[i].record % 1000)}`;
+						}
+					}
+
+					const listString = userListWithStats.map(t => `${t.rank}. ${t.discordID} (${t.username}): ${t.record} (#${t.leaderboardRank})`).join('\n') || 'I couldn\'t find any users to rank.';
+					return interaction.editReply(`**Leaderboard for ${interaction.options.getString('statistic')}:**\n${listString}`);
 				}
 
 				//leaderboard for zen
 				if(requestedStat == 'zenLevel'){
+					//declare class
+					class UserPlusInfo {
+						constructor(discordID, username, level, score, rank) {
+							this.discordID = discordID;
+							this.username = username;
+							this.level = level;
+							this.score = score;
+							this.rank = rank;
+						}
+					}
 
+					for (i in userList) {
+						//get username
+						const userUsername = await getData.getData(userList[i].discordID, 'info', 'username');
+
+						//writing onto user stats
+						const userLevel = await getData.getData(userList[i].discordID, 'records', 'zenLevel');
+						const userScore = await getData.getData(userList[i].discordID, 'records', 'zenScore');
+
+						//writing onto array of user+stats
+							const userObject = new UserPlusInfo(userList[i].discordID, userUsername, userLevel, userScore);
+							userListWithStats.push(userObject);
+
+						//sort greatest to least
+						userListWithStats.sort((a, b) => b.level - a.level);
+					}
+
+					//give each person a rank
+					let currentRank = 1;
+					for (i in userListWithStats) {
+						//when the first one in the list
+						if (i == 0) {
+							userListWithStats[i].rank = 1;
+						}
+						//when same as previous
+						else if (userListWithStats[i].score == userListWithStats[i - 1].score) {
+							userListWithStats[i].rank = currentRank;
+						}
+						//when different than previous
+						else {
+							currentRank++;
+							userListWithStats[i].rank = currentRank;
+						}
+					}
+
+					const listString = userListWithStats.map(t => `${t.rank}. ${t.discordID} (${t.username}): Level ${t.level} (score: ${t.score})`).join('\n') || 'I couldn\'t find any users to rank.';
+					return interaction.editReply(`**Leaderboard for ${interaction.options.getString('statistic')}:**\n${listString}`);
 				}
 
 				return interaction.editReply('this feature hasn\'t been completed yet lol sorry');
